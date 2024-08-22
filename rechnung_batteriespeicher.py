@@ -3,15 +3,15 @@ import pandas as pd
 
 # User Inputs
 investment = st.number_input('Investment', value=4066700, format="%d")
-equity_percent = st.number_input('Eigenkapital (%)', value=20.0) / 100.0
-interest_rate = st.number_input('Zinssatz (%)', value=5.0) / 100.0
+equity_percent = st.number_input('Eigenkapital (%)', value=20.0, step=1.0) / 100.0
+interest_rate = st.number_input('Zinssatz (%)', value=5.0, step=1.0) / 100.0
 loan_duration = st.number_input('Laufzeit Kredit (Jahre)', value=5, format="%d")
-depreciation = st.number_input('Abschreibung pro Jahr', value=508338, format="%d")
+depreciation_years = st.number_input('Abschreibungsjahre', value=8, format="%d")
 maintenance = st.number_input('Wartung', value=81334, format="%d")
 insurance = st.number_input('Versicherung', value=40667, format="%d")
 management = st.number_input('Geschäftsführung', value=50000, format="%d")
 revenue = st.number_input('Einnahmen pro Jahr', value=1200000, format="%d")
-tax_rate = st.number_input('Steuern (%)', value=30.0) / 100.0
+tax_rate = st.number_input('Steuern (%)', value=30.0, step=1.0) / 100.0
 project_duration = st.number_input('Projektlebenszeit (Jahre)', value=12, format="%d")
 
 # Calculate Loan Amount automatically
@@ -22,6 +22,12 @@ annuity_payment = round((loan_amount * interest_rate) / (1 - (1 + interest_rate)
 
 # Calculate equity (EK) in monetary terms
 equity = round(investment * equity_percent)
+
+# Calculate annual depreciation amount
+if depreciation_years > 0:
+    depreciation_amount = round(investment / depreciation_years)
+else:
+    depreciation_amount = 0
 
 # Calculations
 years = range(1, project_duration + 1)
@@ -44,6 +50,9 @@ for year in years:
     # Tilgung (Repayment part of the annuity)
     tilgung = round(annuity_payment - zinskosten) if year <= loan_duration else 0
     cumulative_tilgung += tilgung
+    
+    # Apply depreciation only in the first 'depreciation_years' years
+    depreciation = depreciation_amount if year <= depreciation_years else 0
     
     # Rohertrag
     rohertrag = round(umsatz - kosten - zinskosten)
@@ -92,7 +101,7 @@ df = pd.DataFrame(data, columns=[
     "Steuern",
     "Gewinn nach Steuern",
     "Tilgung",
-    "Tilgung kumuliiert",
+    "Tilgung kumuliert",
     "Gewinn nach Steuern und Abschreibung"
 ], index=years)
 
